@@ -8,7 +8,7 @@ import { Sessions, Users } from '../server/models/reactypeModels';
 const request = require('supertest');
 const mongoose = require('mongoose');
 const mockNext = jest.fn(); // Mock nextFunction
-const MONGO_DB = import.meta.env.MONGO_DB_TEST;
+const MONGO_DB = process.env.MONGO_DB_TEST;
 const { user } = mockData;
 const PORT = 8080;
 

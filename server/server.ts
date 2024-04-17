@@ -24,6 +24,8 @@ dotenv.config();
 
 const app = express();
 
+console.log('Sean process.env.NODE_ENV check', process.env.NODE_ENV);
+
 const PORT = process.env.PORT || DEV_PORT;
 const isDev = process.env.NODE_ENV === 'development';
 const isProd = process.env.NODE_ENV === 'production';
@@ -49,14 +51,21 @@ app.use(
   })
 );
 
+function logRequest(req, res, next) {
+  const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+  console.log(`Received request on ${req.method}: ${fullUrl}`);
+  next();
+}
+app.use(logRequest);
+
 //if in production mode, statically serve everything in the build folder on the route '/dist'
 if (process.env.NODE_ENV == 'production') {
-  console.log('currently in port', process.env.PORT);
+  console.log('currently in port', PORT);
   console.log('in production');
   console.log('joined path: ', path.join(__dirname, '../build'));
   app.use('/', express.static(path.join(__dirname, '../build')));
 } else {
-  console.log('not production');
+  console.log('not production', PORT);
   app.get('/', (req, res) => {
     const indexPath = path.join(__dirname, '../index.html');
     return res.status(200).sendFile(indexPath);
@@ -78,6 +87,7 @@ app.use(
     cookie: { maxAge: 24 * 60 * 60 * 1000 }
   })
 );
+
 app.use(passport.initialize());
 app.use(passport.session());
 app.use('/auth', authRoutes);
@@ -455,6 +465,11 @@ app.use('/user-styles', stylesRouter);
 
 import typeDefs from './graphQL/schema/typeDefs';
 const schema = makeExecutableSchema({ typeDefs, resolvers });
+
+app.use((req, res, next) => {
+  console.log('Middleware before /signup');
+  next();
+});
 
 app.post(
   '/signup',

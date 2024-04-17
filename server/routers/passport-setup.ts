@@ -6,6 +6,16 @@ import config from '../../config';
 
 const GitHubStrategy = passportGithub2.Strategy;
 const { API_BASE_URL } = config;
+console.log(
+  'Sean passport-setup.ts github check',
+  process.env.GITHUB_CLIENT,
+  process.env.GITHUB_SECRET
+);
+console.log(
+  'Sean passport-setup.ts google check',
+  process.env.GOOGLE_CLIENT,
+  process.env.GOOGLE_SECRET
+);
 
 passport.serializeUser((user, done) => {
   done(null, user.id);

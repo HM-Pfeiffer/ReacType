@@ -32,6 +32,8 @@ import { RootState } from '../../redux/store';
 import makeStyles from '@mui/styles/makeStyles';
 import { newUserIsCreated } from '../../helperFunctions/auth';
 
+import axios from 'axios';
+
 declare module '@mui/styles/defaultTheme' {
   // eslint-disable-next-line @typescript-eslint/no-empty-interface
   interface DefaultTheme extends Theme {}
@@ -100,7 +102,44 @@ const SignUp: React.FC<LoginInt & RouteComponentProps> = (props) => {
     }
   };
 
-  const handleSignUp = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+  const newUserIsCreated = async (username, email, password) => {
+    try {
+      const response = await axios.post('http://localhost:5656/signup', {
+        username,
+        email,
+        password
+      });
+      return response.data.message;
+    } catch (error) {
+      console.error('Signup failed in newUserIsCreated:', error);
+      throw new Error('Failed to create user in newUserIsCreated.');
+    }
+  };
+
+  const setErrorMessages = (type, message) => {
+    switch (type) {
+      case 'email':
+        setInvalidEmail(true);
+        setInvalidEmailMsg(message);
+        break;
+      case 'username':
+        setInvalidUsername(true);
+        setInvalidUsernameMsg(message);
+        break;
+      case 'password':
+        setInvalidPassword(true);
+        setInvalidPasswordMsg(message);
+        break;
+      case 'verifyPassword':
+        setInvalidVerifyPassword(true);
+        setInvalidVerifyPasswordMsg(message);
+        break;
+      default:
+        console.log('Unknown error type');
+    }
+  };
+
+  const handleSignUp = async (e) => {
     e.preventDefault();
 
     // Reset Error Validation
@@ -113,88 +152,77 @@ const SignUp: React.FC<LoginInt & RouteComponentProps> = (props) => {
     setInvalidPassword(false);
     setInvalidVerifyPassword(false);
 
+    // Validate input fields and set errors if any
     if (email === '') {
-      setInvalidEmail(true);
-      setInvalidEmailMsg('No Email Entered');
+      setErrorMessages('email', 'No Email Entered');
       return;
     } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(email)) {
-      setInvalidEmail(true);
-      setInvalidEmailMsg('Invalid Email Format');
+      setErrorMessages('email', 'Invalid Email Format');
       return;
-    } else {
-      setInvalidEmail(false);
     }
 
     if (username === '') {
-      setInvalidUsername(true);
-      setInvalidUsernameMsg('No Username Entered');
+      setErrorMessages('username', 'No Username Entered');
       return;
     } else if (!/^[\w\s-]{4,15}$/i.test(username)) {
-      setInvalidUsername(true);
-      setInvalidUsernameMsg('Must Be 4 - 15 Characters Long');
+      setErrorMessages('username', 'Must Be 4 - 15 Characters Long');
       return;
     } else if (!/^[\w-]+$/i.test(username)) {
-      setInvalidUsername(true);
-      setInvalidUsernameMsg('Cannot Contain Spaces or Special Characters');
+      setErrorMessages(
+        'username',
+        'Cannot Contain Spaces or Special Characters'
+      );
       return;
-    } else {
-      setInvalidUsername(false);
     }
 
     if (password === '') {
-      setInvalidPassword(true);
-      setInvalidPasswordMsg('No Password Entered');
+      setErrorMessages('password', 'No Password Entered');
       return;
     } else if (password.length < 8) {
-      setInvalidPassword(true);
-      setInvalidPasswordMsg('Minimum 8 Characters');
+      setErrorMessages('password', 'Minimum 8 Characters');
       return;
     } else if (
       !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/i.test(
         password
       )
     ) {
-      setInvalidPassword(true);
-      setInvalidPasswordMsg('Minimum 1 Letter, Number, and Special Character');
+      setErrorMessages(
+        'password',
+        'Minimum 1 Letter, Number, and Special Character'
+      );
       return;
     } else if (password !== passwordVerify) {
-      setInvalidPassword(true);
-      setInvalidVerifyPassword(true);
-      setInvalidPasswordMsg('Verification Failed');
-      setInvalidVerifyPasswordMsg('Verification Failed');
+      setErrorMessages('password', 'Verification Failed');
+      setErrorMessages('verifyPassword', 'Verification Failed');
       setPasswordVerify('');
       return;
-    } else {
-      setInvalidPassword(false);
     }
 
-    if (password !== passwordVerify) {
-      setInvalidPassword(true);
-      setInvalidVerifyPassword(true);
-      setInvalidPasswordMsg('Verification Failed');
-      setInvalidVerifyPasswordMsg('Verification Failed');
-      setPasswordVerify('');
-      return;
-    } else {
-      setInvalidVerifyPassword(false);
-    }
-
-    newUserIsCreated(username, email, password).then((userCreated) => {
+    // Attempt to create a new user
+    try {
+      const userCreated = await newUserIsCreated(username, email, password);
       if (userCreated === 'Success') {
         props.history.push('/');
       } else {
         switch (userCreated) {
           case 'Email Taken':
-            setInvalidEmail(true);
-            setInvalidEmailMsg('Email Taken');
+            setErrorMessages('email', 'Email Taken');
             break;
           case 'Username Taken':
-            setInvalidUsername(true);
-            setInvalidUsernameMsg('Username Taken');
+            setErrorMessages('username', 'Username Taken');
             break;
+          default:
+            console.log(
+              'Signup failed: Unknown or unhandled error',
+              userCreated
+            );
+          // Optionally set a generic error message for the user
         }
       }
-    });
+    } catch (error) {
+      console.error('Error during signup in handleSignUp:', error);
+      // Handle network or server errors (optional: set a generic user-facing error message)
+    }
   };
 
   return (
@@ -220,7 +248,7 @@ const SignUp: React.FC<LoginInt & RouteComponentProps> = (props) => {
             >
               Sign up
             </Typography>
-            <form className={classes.form} noValidate>
+            <form className={classes.form} noValidate onSubmit={handleSignUp}>
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <TextField
@@ -319,7 +347,6 @@ const SignUp: React.FC<LoginInt & RouteComponentProps> = (props) => {
                 variant="contained"
                 color="primary"
                 className={classes.submit}
-                onClick={(e) => handleSignUp(e)}
                 sx={{
                   backgroundColor: '#2997ff',
                   marginBottom: '5px',

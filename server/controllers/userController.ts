@@ -40,6 +40,7 @@ const userController: UserController = {
     }
   },
   createUser: (req, res, next) => {
+    console.log('start of createUser check');
     let email, username, password;
     // use this condition for Oauth login
     if (res.locals.signUpType === 'oauth') {
@@ -61,13 +62,17 @@ const userController: UserController = {
       return res.status(400).json('No password input');
     }
 
+    console.log('before Users.create check');
     // create user using username and password
+    console.log('username', username, 'password', password, 'email', email);
     Users.create(
       { username, password, email },
       (err: newUserError, newUser) => {
         // handle error of creating a new user
         if (err) {
+          console.log('Error in Users.create:', err);
           if (res.locals.signUpType === 'oauth') {
+            console.log('res.locals.signUpType', res.locals.signUpType);
             return next();
           }
           if (err.keyValue?.email) {
@@ -87,6 +92,7 @@ const userController: UserController = {
             }
           });
         }
+        console.log('after Users.create check', newUser);
         // if no error found when creating a new user, send back user ID in res.locals
         res.locals.id = newUser.id;
         // send back username to store on cookies for forking projects
@@ -141,8 +147,6 @@ const userController: UserController = {
       }
     });
   }
-
-
- };
+};
 
 export default userController;

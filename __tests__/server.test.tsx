@@ -8,15 +8,16 @@ import app from '../server/server';
 import mockData from '../mockData';
 import { profileEnd } from 'console';
 import { Projects, Users, Sessions } from '../server/models/reactypeModels';
+import processArguments from 'webpack-dev-server/types/bin/process-arguments';
 const request = require('supertest');
 const mongoose = require('mongoose');
 const mockNext = jest.fn(); // Mock nextFunction
-const MONGO_DB = import.meta.env.MONGO_DB_TEST;
+const MONGO_DB = process.env.MONGO_DB_TEST;
 const { state, projectToSave, user } = mockData;
 const PORT = 8080;
 
 beforeAll(async () => {
-  await mongoose.connect(MONGO_DB, {
+  await MONGO_DB(MONGO_DB, {
     useNewUrlParser: true,
     useUnifiedTopology: true
   });
